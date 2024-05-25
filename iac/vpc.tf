@@ -1,5 +1,5 @@
 locals {
-  aws_account_id = ${AWS_ACCOUNT_ID}
+  aws_account_id = "${AWS_ACCOUNT_ID}"
 }
 
 module "company-example-vpc" {
