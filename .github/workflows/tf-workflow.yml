@@ -4,6 +4,7 @@ run-name: ${{ github.actor }} will run a tofu workflow (plan or apply)
 env:
   AWS_ACCESS_KEY_ID:  ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY:  ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_REGION: ${{ vars.AWS_REGION }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 on:
@@ -31,10 +32,30 @@ jobs:
         shell: bash
         working-directory: iac/
     steps:
-
-
       - uses: actions/checkout@v4
       - uses: opentofu/setup-opentofu@v1
+
+      - uses: franzbischoff/replace_envs@v1
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          from_file: 'iac/providers-backend.tf'
+          to_file: 'iac/providers-backend.tf'
+
+      - uses: franzbischoff/replace_envs@v1
+        env:
+          AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          from_file: 'iac/vpc.tf'
+          to_file: 'iac/vpc.tf'
+
+      - uses: franzbischoff/replace_envs@v1
+        env:
+          AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+        with:
+          from_file: 'iac/eks.tf'
+          to_file: 'iac/eks.tf'
 
       - name: OpenTofu fmt
         id: fmt
@@ -133,6 +154,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: opentofu/setup-opentofu@v1
+
+      - uses: franzbischoff/replace_envs@v1
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          from_file: 'iac/providers-backend.tf'
+          to_file: 'iac/providers-backend.tf'
+      - uses: franzbischoff/replace_envs@v1
+        env:
+          AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          from_file: 'iac/vpc.tf'
+          to_file: 'iac/vpc.tf'
+      - uses: franzbischoff/replace_envs@v1
+        env:
+          AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+        with:
+          from_file: 'iac/eks.tf'
+          to_file: 'iac/eks.tf'
+
       - name: OpenTofu fmt
         id: fmt
         run: tofu fmt -check

@@ -33,11 +33,11 @@ module "company-example-eks" {
   authentication_mode                      = "API"
   enable_cluster_creator_admin_permissions = false
   access_entries = {
-    SsoAdmin = {
+    Admins = {
       kubernetes_groups = []
-      principal_arn     = "arn:aws:iam::381491846999:user/jfotopoulos"
+      principal_arn     = "arn:aws:iam::${AWS_ACCOUNT_ID}:role/company-example-eks-admin"
       policy_associations = {
-        example = {
+        first = {
           policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
           access_scope = {
             type       = "cluster"
@@ -231,7 +231,8 @@ module "ebs_csi_irsa" {
   }
 
   tags = {
-    Name = "ebs-csi-irsa"
+    Name        = "ebs-csi-irsa"
+    Environment = "dev"
   }
 }
 

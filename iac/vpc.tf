@@ -1,14 +1,13 @@
 locals {
-  aws_account_id = $AWS_ACCOUNT_ID
+  aws_account_id = ${AWS_ACCOUNT_ID}
 }
-
 
 module "company-example-vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "5.8.1"
 
   name = "company-example-vpc"
-  azs  = ["eu-west-1a", "eu-west-1b", "eu-west-1c"]
+  azs  = ["${AWS_REGION}a", "${AWS_REGION}b", "${AWS_REGION}c"]
 
   cidr             = "10.4.0.0/16"
   private_subnets  = ["10.4.0.0/22", "10.4.4.0/22", "10.4.8.0/22"]
