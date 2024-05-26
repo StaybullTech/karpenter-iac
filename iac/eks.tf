@@ -37,7 +37,7 @@ module "company-example-eks" {
       kubernetes_groups = []
       principal_arn     = module.iam_github_oidc_role.arn
       policy_associations = {
-        first = {
+        admin = {
           policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
           access_scope = {
             type       = "cluster"
@@ -286,10 +286,80 @@ module "iam_github_oidc_role" {
   ]
 
   policies = {
-    EKSClusterAdminPolicy = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+    # EKSClusterAdminPolicy = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+    EKSView = module.EKSView.arn
   }
 
   tags = {
     Environment = "dev"
   }
+}
+
+module "EKSAdmin" {
+  source      = "terraform-aws-modules/iam/aws//modules/iam-policy"
+  version     = "5.39.1"
+  name        = "EKSAdmin"
+  path        = "/"
+  description = "EKS Admin Policy"
+
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": ["eks*"],
+      "Effect": "Allow",
+      "Resource": "*"
+    }
+  ]
+}
+EOF
+}
+
+module "EKSView" {
+  source      = "terraform-aws-modules/iam/aws//modules/iam-policy"
+  version     = "5.39.1"
+  name        = "EKSView"
+  path        = "/"
+  description = "EKS View only Policy"
+
+  policy = <<EOF
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Effect": "Allow",
+			"Action": [
+				"eks:ListEksAnywhereSubscriptions",
+				"eks:DescribeFargateProfile",
+				"eks:ListTagsForResource",
+				"eks:DescribeInsight",
+				"eks:ListAccessEntries",
+				"eks:ListAddons",
+				"eks:DescribeEksAnywhereSubscription",
+				"eks:DescribeAddon",
+				"eks:ListAssociatedAccessPolicies",
+				"eks:DescribeNodegroup",
+				"eks:ListUpdates",
+				"eks:DescribeAddonVersions",
+				"eks:ListIdentityProviderConfigs",
+				"eks:ListNodegroups",
+				"eks:DescribeAddonConfiguration",
+				"eks:DescribeAccessEntry",
+				"eks:DescribePodIdentityAssociation",
+				"eks:ListInsights",
+				"eks:ListPodIdentityAssociations",
+				"eks:ListFargateProfiles",
+				"eks:DescribeIdentityProviderConfig",
+				"eks:DescribeUpdate",
+				"eks:AccessKubernetesApi",
+				"eks:DescribeCluster",
+				"eks:ListClusters",
+				"eks:ListAccessPolicies"
+			],
+			"Resource": "*"
+		}
+	]
+}
+EOF
 }
