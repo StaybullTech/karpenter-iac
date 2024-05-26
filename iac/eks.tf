@@ -304,14 +304,14 @@ module "EKSAdmin" {
 
   policy = <<EOF
 {
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": ["eks*"],
-      "Effect": "Allow",
-      "Resource": "*"
-    }
-  ]
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Effect": "Allow",
+			"Action": "eks:*",
+			"Resource": "*"
+		}
+	]
 }
 EOF
 }
