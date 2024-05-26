@@ -35,7 +35,7 @@ module "company-example-eks" {
   access_entries = {
     Admins = {
       kubernetes_groups = []
-      principal_arn     = "arn:aws:iam::${AWS_ACCOUNT_ID}:role/company-example-eks-admin"
+      principal_arn     = module.iam_github_oidc_role.arn
       policy_associations = {
         first = {
           policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
@@ -255,6 +255,38 @@ module "karpenter" {
   # Attach additional IAM policies to the Karpenter node IAM role
   node_iam_role_additional_policies = {
     AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+  }
+
+  tags = {
+    Environment = "dev"
+  }
+}
+
+# -------------------------------------------------------------------------------------------------
+# IdP/Role for Github Actions
+# -------------------------------------------------------------------------------------------------
+module "iam_github_oidc_provider" {
+  source  = "terraform-aws-modules/iam/aws//modules/iam-github-oidc-provider"
+  version = "5.39.1"
+
+  tags = {
+    Environment = "dev"
+  }
+}
+
+module "iam_github_oidc_role" {
+  source  = "terraform-aws-modules/iam/aws//modules/iam-github-oidc-role"
+  version = "5.39.1"
+  name    = "company-example-eks-admin"
+
+  # This should be updated to suit your organization, repository, references/branches, etc.
+  # subjects = ["terraform-aws-modules/terraform-aws-iam:*"]
+  subjects = [
+    "StaybullTech/karpenter-iac:*"
+  ]
+
+  policies = {
+    EKSClusterAdminPolicy = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
   }
 
   tags = {
