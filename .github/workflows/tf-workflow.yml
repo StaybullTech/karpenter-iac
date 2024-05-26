@@ -1,0 +1,188 @@
+name: OpenTofu Setup WorkFlow
+run-name: ${{ github.actor }} will run a tofu workflow (plan or apply)
+
+env:
+  AWS_ACCESS_KEY_ID:  ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY:  ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - 'iac/**'
+      - '.github/workflows/tf-*.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'iac/**'
+      - '.github/workflows/tf-*.yml'
+  # workflow_dispatch:
+
+jobs:
+  Tofu-Plan:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    defaults:
+      run:
+        shell: bash
+        working-directory: iac/
+    steps:
+      - uses: actions/checkout@v4
+      - uses: opentofu/setup-opentofu@v1
+
+      - uses: franzbischoff/replace_envs@v1
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          from_file: 'iac/providers-backend.tf'
+          to_file: 'iac/providers-backend.tf'
+
+      - uses: franzbischoff/replace_envs@v1
+        env:
+          AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          from_file: 'iac/vpc.tf'
+          to_file: 'iac/vpc.tf'
+
+      - name: OpenTofu fmt
+        id: fmt
+        run: tofu fmt -check
+        continue-on-error: true
+
+      - name: OpenTofu Init
+        id: init
+        run: tofu init
+
+      - name: OpenTofu Validate
+        id: validate
+        run: tofu validate -no-color
+
+      - run: mkdir /tmp/artifacts
+
+      - name: OpenTofu Plan
+        id: plan
+        run: tofu plan -no-color -out=/tmp/artifacts/plan-output.txt
+        continue-on-error: true
+
+      - uses: actions/upload-artifact@v4.3.3
+        with:
+          name: plan-output
+          path: /tmp/artifacts/plan-output.txt
+          overwrite: true
+          if-no-files-found: warn
+
+      - uses: actions/github-script@v6
+        if: github.event_name == 'pull_request'
+        env:
+          PLAN: "tofu\n${{ steps.plan.outputs.stdout }}"
+        with:
+            github-token: ${{ secrets.GITHUB_TOKEN }}
+            script: |
+              // 1. Retrieve existing bot comments for the PR
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+              })
+              const botComment = comments.find(comment => {
+                return comment.user.type === 'Bot' && comment.body.includes('OpenTofu Format and Style')
+              })
+
+              // 2. Prepare format of the comment
+              const output = `#### OpenTofu Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+              #### OpenTofu Initialization ⚙️\`${{ steps.init.outcome }}\`
+              #### OpenTofu Validation 🤖\`${{ steps.validate.outcome }}\`
+              <details><summary>Validation Output</summary>
+
+              \`\`\`\n
+              ${{ steps.validate.outputs.stdout }}
+              \`\`\`
+
+              </details>
+
+              #### OpenTofu Plan 📖\`${{ steps.plan.outcome }}\`
+
+              <details><summary>Show Plan</summary>
+
+              \`\`\`\n
+              ${process.env.PLAN}
+              \`\`\`
+
+              </details>
+
+              *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Working Directory: \`${{ env.tf_actions_working_dir }}\`, Workflow: \`${{ github.workflow }}\`*`;
+
+              // 3. If we have a comment, update it, otherwise create a new one
+              if (botComment) {
+                github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: botComment.id,
+                  body: output
+                })
+              } else {
+                github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: output
+                })
+              }
+#####
+  Tofu-Apply:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    defaults:
+      run:
+        shell: bash
+        working-directory: iac/
+    steps:
+      - uses: actions/checkout@v4
+      - uses: opentofu/setup-opentofu@v1
+
+      - uses: franzbischoff/replace_envs@v1
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          from_file: 'iac/providers-backend.tf'
+          to_file: 'iac/providers-backend.tf'
+      - uses: franzbischoff/replace_envs@v1
+        env:
+          AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          from_file: 'iac/vpc.tf'
+          to_file: 'iac/vpc.tf'
+
+      - name: OpenTofu fmt
+        id: fmt
+        run: tofu fmt -check
+        continue-on-error: true
+
+      - name: OpenTofu Init
+        id: init
+        run: tofu init
+
+      - name: OpenTofu Validate
+        id: validate
+        run: tofu validate -no-color
+
+      - name: plan-output
+        id: download-artifact
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          github_token: ${{secrets.GITHUB_TOKEN}}
+          path: /tmp
+          if_no_artifact_found: warn
+
+      - name: OpenTofu Apply
+        id: apply
+        run: tofu apply /tmp/plan-output/plan-output.txt -no-color
