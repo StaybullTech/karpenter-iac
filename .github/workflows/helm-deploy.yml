@@ -45,6 +45,7 @@ jobs:
         run: |
           for i in `ls`; do
             envsubst < $i > $i.tmp && mv $i.tmp $i
+            cat $i
           done
       - name: Deploy yaml files (if not deployed)
         working-directory: karpenter-resources/
