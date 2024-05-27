@@ -25,7 +25,7 @@ module "company-example-eks" {
   cluster_version                 = local.cluster_version
   vpc_id                          = local.vpc_id
   cluster_endpoint_private_access = true
-  cluster_endpoint_public_access  = false
+  cluster_endpoint_public_access  = true
 
   # Cluster authentication/authorization
   # To add the current caller identity as an administrator
