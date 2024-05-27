@@ -203,6 +203,7 @@ jobs:
         run: |
           cat /tmp/tf.out.json
           gh variable set KARPENTER_CONTROLLER_ROLE --body `cat /tmp/tf.out.json | jq -r '."karpenter-controller-role-arn".value'`
+          gh variable set KARPENTER_NODE_ROLE --body `cat /tmp/tf.out.json | jq -r '."karpenter-node-role-arn".value'`
           gh variable set EKS_DEPLOY_ROLE --body `cat /tmp/tf.out.json | jq -r '."eks-deploy-role-arn".value'`
           gh variable set KARPENTER_SQS --body `cat /tmp/tf.out.json | jq -r '."karpenter-sqs-queue-name".value'`
           gh variable set EKS_CLUSTER_NAME --body `cat /tmp/tf.out.json | jq -r '."eks-cluster-name".value'`

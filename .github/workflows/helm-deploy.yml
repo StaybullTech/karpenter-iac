@@ -37,4 +37,16 @@ jobs:
           --set settings.clusterName=${{ vars.EKS_CLUSTER_NAME }} \
           --set settings.clusterEndpoint='${{ vars.EKS_CLUSTER_ENDPOINT }}' \
           --set settings.interruptionQueue=${{ vars.KARPENTER_SQS }}
-          #export KUBECONFIG=$(kubectl config view --raw)
+      - name: Replace env vars in yaml files
+        run: |
+          cd karpenter-resources
+          for i in `ls`; do
+            envsubst < $i | sponge $i
+          done
+      - name: Deploy yaml files (if not deployed)
+        run: |
+          cd karpenter-resources
+          for i in `ls`; do
+            echo "Updating $i"
+            kubectl apply -f $i || echo Failed or is immutable: $i
+          done

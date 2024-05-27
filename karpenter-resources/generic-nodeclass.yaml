@@ -1,0 +1,43 @@
+apiVersion: karpenter.k8s.aws/v1beta1
+kind: EC2NodeClass
+metadata:
+  name: generic
+  annotations:
+    kubernetes.io/description: "Generic Company-example NodeClass"
+spec:
+  amiFamily: AL2 # Amazon Linux 2
+  role: "Karpenter-company-example-20240521141523464400000014"
+  # Required, discovers subnets to attach to instances
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "company-example-karpenter-subnet"
+
+  # Required, discovers security groups to attach to instances
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "company-example-karpenter-sg"
+
+  userData: |
+    MIME-Version: 1.0
+    Content-Type: multipart/mixed; boundary="BOUNDARY"
+
+    --BOUNDARY
+    Content-Type: text/x-shellscript; charset="us-ascii"
+
+    #!/bin/bash
+    export ENABLE_PREFIX_DELEGATION=true
+    export WARM_PREFIX_TARGET=1
+
+    --BOUNDARY--
+
+  blockDeviceMappings:
+    - deviceName: /dev/xvda
+      ebs:
+        volumeSize: 80Gi
+        volumeType: gp3
+        encrypted: true
+        deleteOnTermination: true
+
+  # Optional, configures detailed monitoring for the instance on EC2
+  # for per minute metrics instead of per 5 min.
+  detailedMonitoring: false
