@@ -39,12 +39,14 @@ jobs:
           --set settings.interruptionQueue=${{ vars.KARPENTER_SQS }}
       - name: Replace env vars in yaml files
         run: |
+          pwd
           cd karpenter-resources
           for i in `ls`; do
             envsubst < $i | sponge $i
           done
       - name: Deploy yaml files (if not deployed)
         run: |
+          pwd
           cd karpenter-resources
           for i in `ls`; do
             echo "Updating $i"
