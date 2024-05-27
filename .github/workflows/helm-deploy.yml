@@ -1,13 +1,14 @@
 name: Deploy Karpenter
 
-on: workflow_call
+on:
+  workflow_call
 
 jobs:
   helm-deploy:
     defaults:
       run:
         shell: bash
-        working-directory: karpenter-controller
+        working-directory: karpenter-controller/
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

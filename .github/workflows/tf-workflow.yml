@@ -211,4 +211,4 @@ jobs:
     needs: Tofu-Apply
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     name: deploy-karpenter-controller
-    uses: ./.github/workflows/helm_deploy.yml
+    uses: ./.github/workflows/helm-deploy.yml
