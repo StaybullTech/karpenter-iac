@@ -6,7 +6,7 @@ metadata:
     kubernetes.io/description: "NodeClass for runners"
 spec:
   amiFamily: AL2 # Amazon Linux 2
-  role: "Karpenter-company-example-20240521141523464400000014"
+  role: "${KARPENTER_NODE_ROLE}"
   # Required, discovers subnets to attach to instances
   subnetSelectorTerms:
     - tags:
