@@ -41,6 +41,8 @@ jobs:
         working-directory: karpenter-resources/
         run: |
           pwd
+          sudo apt-get update
+          sudo apt-get -y install moreutils
           for i in `ls`; do
             envsubst < $i | sponge $i
           done
