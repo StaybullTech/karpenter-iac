@@ -41,8 +41,9 @@ jobs:
       - name: Replace env vars in yaml files
         working-directory: karpenter-resources/
         env:
-          KARPENTER_NODE_ROLE: ${{ vars.KARPENTER_NODE_ROLE }}
+          ROLE: ${{ vars.KARPENTER_NODE_ROLE }}
         run: |
+          export KARPENTER_NODE_ROLE=$(echo $ROLE | cut -d'/' -f2)
           for i in `ls`; do
             envsubst < $i > $i.tmp && mv $i.tmp $i
             cat $i
