@@ -16,12 +16,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - run: echo ${{ vars.EKS_DEPLOY_ROLE }}
       - name: Configure AWS Credentials
         id: aws_creds
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: ${{ vars.EKS_DEPLOY_ROLE }}
+          role-to-assume: '${{ vars.EKS_DEPLOY_ROLE }}'
           role-session-name: GitHub_to_AWS_via_FederatedOIDC
       - name: prepare helm install
         id: helm_upgrade
