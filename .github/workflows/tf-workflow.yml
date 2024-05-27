@@ -1,5 +1,5 @@
 name: OpenTofu Setup WorkFlow
-run-name: ${{ github.actor }} will run a tofu workflow (plan or apply)
+run-name: karpenter setup by ${{ github.actor }}
 
 env:
   AWS_ACCESS_KEY_ID:  ${{ secrets.AWS_ACCESS_KEY_ID }}

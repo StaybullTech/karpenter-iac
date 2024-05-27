@@ -1,0 +1,35 @@
+name: Deploy Karpenter
+
+on: workflow_call
+
+jobs:
+  helm-deploy:
+    defaults:
+      run:
+        shell: bash
+        working-directory: karpenter-controller
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure AWS Credentials
+        id: aws_creds
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ vars.KARPENTER_CONTROLLER_ROLE }}
+          role-session-name: helm-deploy-session
+      - name: prepare helm install
+        id: helm_upgrade
+        run: |
+          aws eks update-kubeconfig --name ${{ vars.EKS_CLUSTER_NAME }} --region ${{ vars.AWS_REGION }}
+          export KUBECONFIG=$(kubectl config view --raw)
+          echo "Begin upgrade/install"
+          docker logout public.ecr.aws
+          helm upgrade --install karpenter oci://public.ecr.aws/karpenter/karpenter \
+            --namespace "karpenter" --create-namespace \
+            --version "0.36.0" \
+            -f values.yaml \
+            --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"='${{ vars.KARPENTER_CONTROLLER_ROLE }}' \
+            --set settings.clusterName=${{ vars.EKS_CLUSTER_NAME }} \
+            --set settings.clusterEndpoint='${{ vars.EKS_CLUSTER_ENDPOINT }}' \
+            --set settings.interruptionQueue=${{ vars.KARPENTER_SQS }}
