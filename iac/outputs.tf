@@ -24,5 +24,5 @@ output "eks-cluster-name" {
 output "eks-cluster-endpoint" {
   value = module.company-example-eks.cluster_endpoint
 }
-#
 ## An empty comment to trigger the deployment
+#
