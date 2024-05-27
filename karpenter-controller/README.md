@@ -11,7 +11,6 @@ Configuration for running on that nodepool has been configured in the `values.ya
 
 ---
 
-
 ```
 docker logout public.ecr.aws
 helm upgrade --install karpenter oci://public.ecr.aws/karpenter/karpenter \
