@@ -1,5 +1,5 @@
-name: OpenTofu Setup WorkFlow
-run-name: karpenter setup by ${{ github.actor }}
+name: opentofu-setup
+run-name: Karpenter Setup by ${{ github.actor }}
 
 env:
   AWS_ACCESS_KEY_ID:  ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -18,7 +18,8 @@ on:
       - main
     paths:
       - 'iac/**'
-      - '.github/workflows/tf-*.yml'
+      - '.github/workflows/*.yml'
+      - 'karpenter-controller/values.yaml'
   # workflow_dispatch:
 
 jobs:
@@ -186,3 +187,28 @@ jobs:
       - name: OpenTofu Apply
         id: apply
         run: tofu apply /tmp/plan-output/plan-output.txt -no-color
+
+      - name: OpenTofu output
+        id: tofu-output
+        run: tofu-bin output -json >> /tmp/tf.out.json
+
+      - name: Show json output
+        id: show-output
+        run: cat /tmp/tf.out.json
+
+      - name: Save secrets/variables
+        id: save-secrets-vars
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
+        run: |
+          cat /tmp/tf.out.json
+          gh variable set KARPENTER_CONTROLLER_ROLE --body `cat /tmp/tf.out.json | jq .karpenter-controller-role-arn.value`
+          gh variable set KARPENTER_SQS --body `cat /tmp/tf.out.json | jq .karpenter-sqs-queue-name.value`
+          gh variable set EKS_CLUSTER_NAME --body `cat /tmp/tf.out.json | jq .eks-cluster-name.value`
+          gh secret set EKS_CLUSTER_ENDPOINT --body `cat /tmp/tf.out.json | jq .eks-cluster-endpoint.value`
+
+  Deploy-Karpenter-Controller:
+    needs: Tofu-Apply
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    name: deploy-karpenter-controller
+    uses: ./.github/workflows/helm_deploy.yml
