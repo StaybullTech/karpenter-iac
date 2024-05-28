@@ -10,7 +10,7 @@ output "karpenter-node-role-arn" {
 
 output "eks-deploy-role-arn" {
   value       = module.iam_github_oidc_role.arn
-  description = "The ARN of the Karpenter Node role that was created."
+  description = "The ARN of the role that Github Actions will use to connect to the cluster."
 }
 
 output "karpenter-sqs-queue-name" {

@@ -4,7 +4,7 @@ on:
   workflow_call
 
 jobs:
-  helm-deploy:
+  deploy:
     defaults:
       run:
         shell: bash
@@ -15,7 +15,6 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      - run: echo ${{ vars.EKS_DEPLOY_ROLE }}
       - name: Configure AWS Credentials
         id: aws_creds
         uses: aws-actions/configure-aws-credentials@v4
